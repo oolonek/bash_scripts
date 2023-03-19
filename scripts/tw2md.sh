@@ -3,7 +3,10 @@ IFS=$(printf '\n\t')
 
 # Check if argument is provided, otherwise use default "next"
 if [ $# -eq 0 ]; then
-    export_arg="export next"
+# beware here export next is separated with a new line on purpose
+    export_arg='limit:3
+    export 
+    next'
 else
     export_arg="$*"
 fi
@@ -11,7 +14,6 @@ fi
 # Export all next tasks as JSON and store in variable
 tasks=$(task $export_arg | jq -c '.')
 
-echo "Exporting tasks with command: task $export_arg"
 
 # Print table headers
 echo "| Project | Description                                             | Due Date   | Tags     |"
@@ -26,17 +28,8 @@ for task in $(echo "$tasks" | jq -c '.[]'); do
     if [[ "$tags" == "null" ]]; then
         tags="None"
     else
-    tags=$(echo "$task" | jq -r '.tags | map("#" + gsub("\"";"")) | @csv' | tr -d '"')
+        tags=$(echo "$task" | jq -r '.tags | map("#" + gsub("\"";"")) | join(", ")')
     fi
-
-
-    # # Check if tags field is not null or empty
-    # if [[ -n "$tags" && "$tags" != "null" ]]; then
-    #     tags=$(echo "$tags" | tr -d '[]' | tr ',' '\n' | sed 's/ //g' | sed 's/^/#/g' | tr '\n' ', ')
-    #     tags="${tags%, }"
-    # else
-    #     tags="None"
-    # fi
 
     # Convert due date to human-readable format
     if [[ -n "$due" && "$due" != "null" ]]; then
